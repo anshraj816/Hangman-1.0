@@ -5,7 +5,7 @@ from logo_day7 import logo
 
 # ================== GAME DATA ==================
 st.title("🎯 Hangman Game")
-st.text(logo)
+st.code(logo) # Use st.code for the logo to prevent mobile formatting issues
 
 stages = [
 r'''
@@ -75,21 +75,24 @@ if "choice" not in st.session_state:
 
 choice = st.session_state.choice
 lives = st.session_state.lives
-# res = st.session_state.res  <-- This local assignment was the culprit
 
 # ================== DISPLAY PLACEHOLDER ==================
+# We add spaces between underscores for better visibility on mobile screens
 display = ""
 for letter in choice:
-    # Use st.session_state.res directly to ensure the UI stays updated
-    display += letter if letter in st.session_state.res else "_"
-st.subheader(display)
+    display += f"{letter} " if letter in st.session_state.res else "_ "
+
+st.subheader("Word to guess:")
+st.code(display) # st.code ensures underscores don't merge on mobile
 
 st.text(f"❤️ Lives Left: {lives}/6")
-st.text(stages[lives])
+st.code(stages[lives])
 
 # ================== USER INPUT ==================
 if not st.session_state.game_over:
-    guess = st.text_input("Enter your guess letter:", max_chars=1, key="input_guess")
+    # .lower() ensures the game isn't case-sensitive
+    guess = st.text_input("Enter your guess letter:", max_chars=1, key="input_guess").lower()
+    
     if st.button("Guess"):
         if not guess:
             st.warning("Please enter a letter")
@@ -101,22 +104,26 @@ if not st.session_state.game_over:
                 st.session_state.lives -= 1
                 st.error(f"'{guess}' is not in the word!")
 
+            # Re-calculate display for win/loss check
+            current_display = "".join([l if l in st.session_state.res else "_" for l in choice])
+
             # Check win/lose
             if st.session_state.lives == 0:
                 st.session_state.game_over = True
-                st.error(f"💀 YOU LOSE! The word was: **{choice}**")
-            elif "_" not in "".join([l if l in st.session_state.res else "_" for l in choice]):
+            elif "_" not in current_display:
                 st.session_state.game_over = True
-                st.success("🎉 YOU WIN!")
+            
+            st.rerun() 
 
-            st.rerun()
-
-# ================== RESTART ==================
+# ================== END GAME SCREEN ==================
 if st.session_state.game_over:
+    if st.session_state.lives == 0:
+        st.error(f"💀 YOU LOSE!")
+        st.info(f"The correct word was: {choice.upper()}")
+    else:
+        st.success(f"🎉 YOU WIN! The word was indeed: {choice.upper()}")
+        
     if st.button("🔄 Restart Game"):
-        st.session_state.choice = random.choice(word_list)
-        st.session_state.lives = 6
-        st.session_state.res = []
-        st.session_state.game_over = False
+        for key in st.session_state.keys():
+            del st.session_state[key]
         st.rerun()
-
