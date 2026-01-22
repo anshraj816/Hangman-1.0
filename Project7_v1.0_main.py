@@ -119,3 +119,4 @@ if st.session_state.game_over:
         st.session_state.res = []
         st.session_state.game_over = False
         st.rerun()
+
